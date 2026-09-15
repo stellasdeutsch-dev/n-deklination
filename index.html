@@ -232,6 +232,14 @@
 
       <div class="hero-visual" aria-hidden="true">
         <div class="orb"></div>
+        <div class="orbit" id="heroOrbit">
+          <svg class="orbit-ring" viewBox="0 0 100 100" preserveAspectRatio="none"><ellipse cx="50" cy="50" rx="49" ry="49"/></svg>
+          <span class="sat" data-i="0"><b>N</b><small>der</small></span>
+          <span class="sat" data-i="1"><b>G</b><small>des</small></span>
+          <span class="sat" data-i="2"><b>D</b><small>dem</small></span>
+          <span class="sat" data-i="3"><b>A</b><small>den</small></span>
+          <span class="sat" data-i="4"><b>Pl</b><small>die</small></span>
+        </div>
         <div class="noun-card" id="heroNoun">
           <div class="nc-top">
             <span class="nc-case">Nominativ</span>
@@ -245,8 +253,6 @@
           <div class="nc-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
         </div>
         <span class="float-chip fc1">+en</span>
-        <span class="float-chip fc2">dem Jungen</span>
-        <span class="float-chip fc3">den Herrn</span>
         <span class="float-chip fc4">des Namens</span>
       </div>
 
@@ -268,10 +274,22 @@
 <section class="sec story" id="story">
   <div class="wrap narrow">
     <h2 class="title-thin" data-reveal>Суть</h2>
+
+    <div class="chain-card card" id="chainBox" data-reveal aria-label="Цепочка предложений">
+      <div class="chain-top">
+        <span class="chain-pill">цепочка</span>
+        <span class="chain-dots" id="chainDots"><i class="on"></i><i></i><i></i></span>
+      </div>
+      <div class="chain-body">
+        <div class="chain-lines" id="chainLines"></div>
+        <svg class="chain-svg" id="chainSvg" aria-hidden="true">
+          <defs><marker id="chArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#EC2548"/></marker></defs>
+        </svg>
+      </div>
+    </div>
+
     <div class="story-card card" data-lines>
-      <p>В немецком есть существительные.</p>
-      <p>У существительных есть падежи. В падежах существительные меняются.</p>
-      <p>Меняются не все. Большинство держится. Добавят <span class="de">-s</span> в Genitiv и стоят дальше, как ни в чём не бывало.</p>
+      <p>Большинство существительных держится. Добавят <span class="de">-s</span> в Genitiv и стоят дальше, как ни в чём не бывало.</p>
       <p class="accent">А есть слабые.</p>
       <p>Слабые держатся ровно один падеж. Nominativ. Дальше сдуваются и цепляют <span class="de red">-en</span>. Везде. Во множественном тоже.</p>
       <p>Говоришь, <span class="de">ich kenne den Student</span>. Немец говорит, кого. Говоришь, <span class="de">den Student</span>. Немец кивает. Немец понял. Немцу больно.</p>
@@ -413,6 +431,46 @@
   </div>
 </section>
 
+<!-- ============ CONVEYOR ============ -->
+<section class="sec conveyor" id="conveyor">
+  <div class="wrap">
+    <h2 class="title-thin" data-reveal>Конвейер склонения</h2>
+    <p class="sub" data-reveal>Слова едут по ленте. Сканер ищет приметы. Штамп ставит Genitiv. Слово падает в свою корзину. И так по кругу. Как в немецкой бюрократии, только быстрее.</p>
+
+    <div class="cv card" id="conveyorBox" data-reveal>
+      <div class="cv-top">
+        <div class="cv-screen" aria-live="polite">
+          <div class="cv-l" id="cvL1">&gt; жду слово_</div>
+          <div class="cv-l" id="cvL2"></div>
+          <div class="cv-l" id="cvL3"></div>
+        </div>
+        <div class="cv-ctrl">
+          <button class="round play" id="cvPlay" aria-label="Пауза"><svg><use href="#i-pause"/></svg></button>
+          <button class="speed" id="cvSpeed" aria-label="Скорость">×1</button>
+        </div>
+      </div>
+
+      <div class="cv-stage" id="cvStage">
+        <div class="cv-arch" aria-hidden="true">
+          <i class="cv-post l"></i><i class="cv-post r"></i>
+          <div class="cv-bar"><span class="cv-led"></span><span class="cv-led"></span><span class="cv-led"></span></div>
+          <div class="cv-beam"></div>
+        </div>
+        <div class="cv-stamp" aria-hidden="true"><i class="cv-rod"></i><div class="cv-press">GEN</div></div>
+        <div class="cv-belt" aria-hidden="true"><i class="cv-roll"></i><i class="cv-roll"></i><i class="cv-roll"></i><i class="cv-roll"></i><i class="cv-roll"></i><i class="cv-roll"></i></div>
+      </div>
+
+      <div class="cv-bins">
+        <div class="bin weak" data-bin="weak"><div class="bin-mouth"></div><div class="bin-body"><b>слабые</b><span class="bin-n">0</span><div class="bin-stack"></div></div></div>
+        <div class="bin strong" data-bin="strong"><div class="bin-mouth"></div><div class="bin-body"><b>сильные</b><span class="bin-n">0</span><div class="bin-stack"></div></div></div>
+        <div class="bin mixed" data-bin="mixed"><div class="bin-mouth"></div><div class="bin-body"><b>смешанные</b><span class="bin-n">0</span><div class="bin-stack"></div></div></div>
+      </div>
+
+      <div class="cv-tile" id="cvTile" aria-hidden="true"><span class="cv-art">der</span><span class="cv-stem">Junge</span><span class="cv-end"></span></div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ DEFLATE STEPPER ============ -->
 <section class="sec deflate" id="deflate">
   <div class="wrap">
@@ -465,6 +523,7 @@
     <p class="sub" data-reveal>Выбери слово и падеж. Машина пройдёт по шагам и скажет, что прицепить.</p>
 
     <div class="mc card" data-reveal>
+      <div class="mc-demo" id="mcDemo"><i></i><span>демо-режим: машина крутит сама</span></div>
       <div class="mc-pick">
         <div class="mc-label">Слово</div>
         <div class="mc-words" id="mcWords" role="radiogroup" aria-label="Слово">
@@ -875,7 +934,7 @@
       <div class="hero-visual phone-visual" aria-hidden="true">
         <div class="orb"></div>
         <div class="phone">
-          <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/phone-derdiedas.jpg" data-src="assets/video/phone-derdiedas.mp4"></video>
+          <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/phone-translator.jpg" data-src="assets/video2/phone-translator.mp4"></video>
         </div>
         <span class="flash f1">der</span>
         <span class="flash f2">die</span>
@@ -935,33 +994,79 @@
       <div class="in-grid">
         <div class="in-card in-tall" data-reveal>
           <p><b>340+ гайдов от A0 до C1.</b> Грамматика, лексика, реальные фразы. Объяснение, видео, упражнения и ответы с разбором</p>
-          <img src="assets/shots/p2-guides.jpg" alt="Список гайдов по грамматике на платформе Stellas" loading="lazy">
+          <img src="assets/shots2/grammar-b1.jpg" alt="Гайды по грамматике B1: Plusquamperfekt, Präteritum, Passiv" loading="lazy">
         </div>
         <div class="in-card" data-reveal style="--d:.06s">
           <p><b><span data-count="7500">7500</span>+ слов</b> с озвучкой и транскрипцией. Слушаешь, а не угадываешь</p>
-          <img src="assets/shots/p4-words.jpg" alt="Карточки слов с кнопкой озвучки" loading="lazy">
+          <img src="assets/shots2/audio-table.jpg" alt="Таблица фраз с аудио и транскрипцией" loading="lazy">
         </div>
         <div class="in-card" data-reveal style="--d:.12s">
           <p><b>Интерактивные гайды в Gemini:</b> озвучка, упражнения с проверкой ИИ, чат с собеседником</p>
-          <img src="assets/video/gemini-table.jpg" alt="Интерактивный гайд по притяжательным местоимениям" loading="lazy">
+          <img src="assets/video2/formula.jpg" alt="Интерактивный гайд Das Passiv" loading="lazy">
         </div>
         <div class="in-card in-wide" data-reveal style="--d:.08s">
           <p><b>Лексика для жизни и работы.</b> Врач, аптека, транспорт, собеседование, звонок работодателю. Готовые фразы под ситуацию</p>
-          <img src="assets/shots/p8-situations.jpg" alt="Лексика по ситуациям: больница, аптека, магазин" loading="lazy">
+          <img src="assets/shots2/lexika-work.jpg" alt="Лексика для работы: поиск работы, резюме, собеседование" loading="lazy">
         </div>
         <div class="in-card" data-reveal>
-          <p><b>Экзамены:</b> Goethe, telc, DTZ, ÖSD, TestDaF. Всё в одном разделе</p>
-          <img src="assets/shots/exams.jpg" alt="Раздел экзаменов Goethe A1–C1" loading="lazy">
+          <p><b>Экзамены, тексты, диалоги:</b> Goethe, telc, DTZ, ÖSD, TestDaF. Всё разложено по колонкам</p>
+          <img src="assets/shots2/materials.jpg" alt="Дополнительные материалы: слова, тексты, диалоги, экзамены" loading="lazy">
         </div>
         <div class="in-card" data-reveal style="--d:.06s">
           <p><b>Трекер и интервальные повторения.</b> Платформа помнит, что пора повторить. Даже если ты не помнишь</p>
-          <img src="assets/shots/flashcards.jpg" alt="Система интервальных повторений слов" loading="lazy">
+          <img src="assets/shots2/habits.jpg" alt="Трекер привычек: чтение, слушание, разговор, письмо" loading="lazy">
         </div>
         <div class="in-card" data-reveal style="--d:.12s">
           <p><b>Фильмы, книги, подкасты</b> уже отсортированы по уровню. Больше никаких сериалов «на вырост»</p>
-          <img src="assets/shots/p1-home.jpg" alt="Подборка фильмов, книг и подкастов по уровням" loading="lazy">
+          <img src="assets/shots2/b1c1-home.jpg" alt="Главная B1–C1: фильмы, подкасты, книги по уровню" loading="lazy">
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- TRACKER + FLASHCARDS -->
+<section class="sec tracker" id="tracker">
+  <div class="wrap">
+    <h2 class="title-thin" data-reveal>Платформа помнит за тебя</h2>
+    <p class="sub" data-reveal>Ты занимаешься. Трекер отмечает. Карточки возвращают слова, которые ты начал забывать. Ты не начинаешь каждый понедельник с нуля.</p>
+
+    <div class="tk-grid">
+      <div class="tk card" id="habitBox" data-reveal>
+        <div class="tk-head">
+          <div><b>Привычки</b><span id="hbDay">день 0 из 14</span></div>
+          <div class="streak"><svg viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-7 .5 2 1.5 3 2.5 3-.7-3.5 0-6 .5-8z" fill="url(#gRed)"/></svg><b id="hbStreak">0</b><small>дней подряд</small></div>
+        </div>
+        <div class="hb-grid" id="hbGrid"></div>
+        <svg class="hb-chart" id="hbChart" viewBox="0 0 280 70" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F76EC" stop-opacity=".35"/><stop offset="1" stop-color="#2F76EC" stop-opacity="0"/></linearGradient></defs>
+          <path class="hb-area" d=""/><polyline class="hb-line" points=""/><circle class="hb-dot" r="4" cx="-10" cy="-10"/>
+        </svg>
+        <div class="hb-foot"><span>минут сегодня: <b id="hbMin">0</b></span><span class="hb-msg" id="hbMsg">поехали</span></div>
+      </div>
+
+      <div class="tk card" id="flashBox" data-reveal style="--d:.1s">
+        <div class="tk-head">
+          <div><b>Интервальные повторения</b><span>слабые существительные</span></div>
+          <div class="fc-score"><span class="ok" id="fcOk">0</span><span class="again" id="fcAgain">0</span></div>
+        </div>
+        <div class="fc-stage" id="fcStage">
+          <div class="fc-pile left"><small>повторить</small></div>
+          <div class="fc-pile right"><small>знаю</small></div>
+        </div>
+        <div class="fc-btns">
+          <button class="fc-b again" data-a="again"><svg><use href="#i-replay"/></svg>Повторить</button>
+          <button class="fc-b ok" data-a="ok"><svg><use href="#i-check"/></svg>Знаю</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tk-real" data-reveal>
+      <span>Так это выглядит в Notion:</span>
+      <img src="assets/shots2/p6-tracker.jpg" alt="Трекер в Notion" loading="lazy">
+      <img src="assets/shots2/b1c1-progress.jpg" alt="Прогресс по темам B1–C1" loading="lazy">
+      <img src="assets/shots2/flashcards-c1.jpg" alt="Флеш-карты уровней A1–C1" loading="lazy">
     </div>
   </div>
 </section>
@@ -1021,42 +1126,91 @@
   </div>
 </section>
 
+<!-- COVERFLOW -->
+<section class="sec coverflow">
+  <div class="wrap">
+    <h2 class="title-thin" data-reveal>Листай платформу</h2>
+    <p class="sub" data-reveal>Карусель крутится сама. Можно свайпнуть или нажать на соседний экран.</p>
+  </div>
+  <div class="cf" id="coverflow" data-reveal>
+    <div class="cf-stage" id="cfStage">
+      <figure class="cf-item"><img src="assets/shots2/a0a2-home.jpg" alt="Главная A0–A2: навигация, таймер, заметки и подборки" loading="lazy" draggable="false"><figcaption>Главная A0–A2: навигация, таймер, заметки и подборки</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/progress.jpg" alt="Прогресс по темам: отмечаешь пройденное и уровень" loading="lazy" draggable="false"><figcaption>Прогресс по темам: отмечаешь пройденное и уровень</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/city.jpg" alt="Лексика «Город»: дорога, транспорт, билеты, контролёр" loading="lazy" draggable="false"><figcaption>Лексика «Город»: дорога, транспорт, билеты, контролёр</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/p5-builder.jpg" alt="Sentence Builder: собираешь фразу, приложение проверяет" loading="lazy" draggable="false"><figcaption>Sentence Builder: собираешь фразу, приложение проверяет</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/verbs.jpg" alt="Глаголы: модальные, приставки, возвратные" loading="lazy" draggable="false"><figcaption>Глаголы: модальные, приставки, возвратные</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/services.jpg" alt="Услуги: салон, барбершоп, запись по телефону" loading="lazy" draggable="false"><figcaption>Услуги: салон, барбершоп, запись по телефону</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/topics-b1.jpg" alt="Темы B1: здоровье, спорт, путешествия, досуг" loading="lazy" draggable="false"><figcaption>Темы B1: здоровье, спорт, путешествия, досуг</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/days.jpg" alt="Дни недели: аудио, IPA и транскрипция кириллицей" loading="lazy" draggable="false"><figcaption>Дни недели: аудио, IPA и транскрипция кириллицей</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/wheel.jpg" alt="Колесо баланса: чтение, слушание, разговор, письмо" loading="lazy" draggable="false"><figcaption>Колесо баланса: чтение, слушание, разговор, письмо</figcaption></figure>
+      <figure class="cf-item"><img src="assets/shots2/calendar.jpg" alt="Календарь, чтобы планировать занятия" loading="lazy" draggable="false"><figcaption>Календарь, чтобы планировать занятия</figcaption></figure>
+    </div>
+    <p class="cf-cap" id="cfCap" aria-live="polite"></p>
+    <div class="cf-ui">
+      <button class="round" id="cfPrev" aria-label="Предыдущий экран"><svg><use href="#i-prev"/></svg></button>
+      <div class="cf-dots" id="cfDots"></div>
+      <button class="round" id="cfNext" aria-label="Следующий экран"><svg><use href="#i-next"/></svg></button>
+    </div>
+    <div class="cf-progress"><i id="cfBar"></i></div>
+  </div>
+</section>
+
 <!-- GALLERY -->
 <section class="sec gallery">
   <div class="wrap">
-    <h2 class="title-thin" data-reveal>Посмотри изнутри</h2>
-    <p class="sub" data-reveal>Это не макеты. Это записи экрана с платформы.</p>
+    <h2 class="title-thin" data-reveal>А теперь в движении</h2>
+    <p class="sub" data-reveal>Это не макеты. Это записи экрана с платформы. Лента листается сама.</p>
   </div>
   <div class="gal-track" data-reveal>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/notion-lexika.jpg" data-src="assets/video/notion-lexika.mp4"></video>
-      <figcaption><b>Лексика по темам</b> — в Notion, с картинками</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/gemini-kasse.jpg" data-src="assets/video2/gemini-kasse.mp4"></video>
+      <figcaption><b>Симулятор «Супермаркет»</b> — лексика в магазине с озвучкой</figcaption>
     </figure>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/gemini-table.jpg" data-src="assets/video/gemini-table.mp4"></video>
-      <figcaption><b>Интерактивный гайд</b> — притяжательные местоимения</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/formula.jpg" data-src="assets/video2/formula.mp4"></video>
+      <figcaption><b>Das Passiv</b> — интерактивный гайд с формулой</figcaption>
     </figure>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/gemini-dieser.jpg" data-src="assets/video/gemini-dieser.mp4"></video>
-      <figcaption><b>Грамматика</b> — dieser, jener и вся матрица склонения</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/konjunktiv-welt.jpg" data-src="assets/video2/konjunktiv-welt.mp4"></video>
+      <figcaption><b>Konjunktiv II</b> — мир «если бы» по шагам</figcaption>
     </figure>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/app-words.jpg" data-src="assets/video/app-words.mp4"></video>
-      <figcaption><b>Слова и новеллы</b> — лексика для работы в Германии</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/sein-haben.jpg" data-src="assets/video2/sein-haben.mp4"></video>
+      <figcaption><b>Sein & Haben</b> — грамматическое ядро</figcaption>
     </figure>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/app-interview.jpg" data-src="assets/video/app-interview.mp4"></video>
-      <figcaption><b>Тренажёр собеседования</b> — диалог с ИИ на немецком</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/derdiedas-chars.jpg" data-src="assets/video2/derdiedas-chars.mp4"></video>
+      <figcaption><b>Семья артиклей</b> — запоминание рода через персонажей</figcaption>
     </figure>
     <figure class="gal-item">
       <div class="browser"><i></i><i></i><i></i></div>
-      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/notion-grammar.jpg" data-src="assets/video/notion-grammar.mp4"></video>
-      <figcaption><b>Грамматика A0–A2</b> — навигация по гайдам</figcaption>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/situations.jpg" data-src="assets/video2/situations.mp4"></video>
+      <figcaption><b>Ситуации A1–A2</b> — у врача, на работе, в аптеке</figcaption>
+    </figure>
+    <figure class="gal-item">
+      <div class="browser"><i></i><i></i><i></i></div>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/phrases-test.jpg" data-src="assets/video2/phrases-test.mp4"></video>
+      <figcaption><b>Умный словарь</b> — салон красоты: слова, фразы, тест</figcaption>
+    </figure>
+    <figure class="gal-item">
+      <div class="browser"><i></i><i></i><i></i></div>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/novel.jpg" data-src="assets/video2/novel.mp4"></video>
+      <figcaption><b>Интерактивная новелла</b> — как уволиться и не пожалеть</figcaption>
+    </figure>
+    <figure class="gal-item">
+      <div class="browser"><i></i><i></i><i></i></div>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/b1-vocab.jpg" data-src="assets/video2/b1-vocab.mp4"></video>
+      <figcaption><b>Lebenslauf</b> — немецкое резюме по шагам</figcaption>
+    </figure>
+    <figure class="gal-item">
+      <div class="browser"><i></i><i></i><i></i></div>
+      <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video2/notion-topics.jpg" data-src="assets/video2/notion-topics.mp4"></video>
+      <figcaption><b>Лексика в Notion</b> — темы с картинками</figcaption>
     </figure>
   </div>
 </section>
@@ -1129,7 +1283,13 @@
     <div class="fv card" data-reveal>
       <div class="fv-left">
         <div class="phone phone-cut">
-          <video class="lazy-video" muted loop playsinline preload="none" poster="assets/video/phone-barbershop.jpg" data-src="assets/video/phone-barbershop.mp4"></video>
+          <div class="screens" id="fvScreens">
+            <img src="assets/shots2/m-audio.jpg" alt="" loading="lazy">
+            <img src="assets/shots2/m-days.jpg" alt="" loading="lazy">
+            <img src="assets/shots2/m-nouns.jpg" alt="" loading="lazy">
+            <img src="assets/shots2/m-audio.jpg" alt="" loading="lazy">
+          </div>
+          <i class="tap" aria-hidden="true"></i>
         </div>
         <span class="fv-badge"><img src="assets/favicon.png" alt="" width="44" height="44"></span>
         <span class="fv-sticker">∞</span>
@@ -1147,16 +1307,14 @@
 <section class="sec reviews">
   <div class="wrap">
     <h2 class="title-thin" data-reveal>Что пишут ученики</h2>
-    <p class="sub" data-reveal>Мы попросили отзывы. Нам написали. Скриншоты как есть.</p>
+    <p class="sub" data-reveal>Мы попросили отзывы. Нам написали. Скриншоты как есть, только имена убрали. Лента едет. Отзывов больше, чем влезает на экран.</p>
   </div>
-  <div class="rev-track" data-reveal>
-    <figure class="rev"><img src="assets/reviews/r6.jpg" alt="Отзыв: удобно, что темы, упражнения и видео в одном месте" loading="lazy"></figure>
-    <figure class="rev"><img src="assets/reviews/r5.jpg" alt="Отзыв: и скорость, и результат, и удовольствие" loading="lazy"></figure>
-    <figure class="rev"><img src="assets/reviews/r1.jpg" alt="Отзыв: уроки хорошо структурированы" loading="lazy"></figure>
-    <figure class="rev"><img src="assets/reviews/r2.jpg" alt="Отзыв: перебрала много ресурсов" loading="lazy"></figure>
-    <figure class="rev"><img src="assets/reviews/r3.jpg" alt="Отзыв: платформа помогла в изучении языка" loading="lazy"></figure>
-    <figure class="rev"><img src="assets/reviews/r4.jpg" alt="Отзыв: всё структурировано, ярко и понятно" loading="lazy"></figure>
+  <div class="marquee" id="revMarquee" data-reveal>
+    <div class="mq-row" data-dir="left"><div class="mq-track"><figure class="rv"><span class="rv-tag">сдала DTZ B1</span><img src="assets/reviews2/rv13.jpg" alt="Отзыв с сертификатом: получилось сдать тест" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv01.jpg" alt="Отзыв: всё нужное на одной платформе" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv11.jpg" alt="Отзыв: персональный словарь и чек-листы" loading="lazy"></figure><figure class="rv rv-text"><span class="rv-tag">сдала B1</span><p>Добрый день, всё в порядке, вчера сдала экзамен по немецкому B1, результат узнаю через месяц, хочу неделю отдохнуть от немецкого, потом буду снова заниматься и тогда напишу отзыв 🙏</p><p>Спасибо за Ваш труд, с Вами приятно и легко заниматься немецким 😊</p><time>15:30</time></figure><figure class="rv"><img src="assets/reviews2/rv04.jpg" alt="Отзыв: грамматика и лексика усваиваются без усилий" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv22.jpg" alt="Отзыв: всё структурировано и легко найти" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv24.jpg" alt="Отзыв: грамотно укомплектовано" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv09.jpg" alt="Отзыв: немецкий начал становиться лучше" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv18.jpg" alt="Отзыв: удобна озвучка слов и транскрипция" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv02.jpg" alt="Отзыв: ясно и чётко" loading="lazy"></figure></div></div>
+    <div class="mq-row" data-dir="right"><div class="mq-track"><figure class="rv"><span class="rv-tag">A2 → B2</span><img src="assets/reviews2/rv10.jpg" alt="Отзыв: с A2 до B2" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv20.jpg" alt="Отзыв: немецкий не превращается в пытку" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv03.jpg" alt="Отзыв: подборка ресурсов для каждого уровня" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv25.jpg" alt="Отзыв: материалы на высшем уровне" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv05.jpg" alt="Отзыв: видео с YouTube и фильмы с субтитрами" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv21.jpg" alt="Отзыв: хороший старт с нуля" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv15.jpg" alt="Отзыв: всё разложено по полочкам в Notion" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv23.jpg" alt="Отзыв: видеообъяснение к каждому уроку" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv12.jpg" alt="Отзыв: доступная цена за такой объём" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv08.jpg" alt="Отзыв: разнообразные материалы" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv19.jpg" alt="Отзыв: занимаюсь каждый день" loading="lazy"></figure><figure class="rv"><img src="assets/reviews2/rv26.jpg" alt="Отзыв: первое впечатление очень хорошее" loading="lazy"></figure></div></div>
+    <p class="mq-hint">Нажми на отзыв, чтобы открыть целиком</p>
   </div>
+  <div class="lightbox" id="lightbox" hidden><button class="lb-close" aria-label="Закрыть"><svg><use href="#i-x"/></svg></button><img alt=""></div>
 </section>
 
 <!-- FAQ -->

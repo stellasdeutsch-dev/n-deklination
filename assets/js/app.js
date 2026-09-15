@@ -50,7 +50,6 @@
   ];
   const hn = $('#heroNoun');
   if (hn) {
-    let hi = 0, timer = null;
     const dots = $$('.nc-dots i', hn);
     const show = i => {
       const f = heroForms[i];
@@ -67,8 +66,53 @@
         hn.classList.remove('swap');
       }, 260);
     };
-    const start = () => { if (!timer && !reduced) timer = setInterval(() => { hi = (hi + 1) % heroForms.length; show(hi); }, 2300); };
-    const stop = () => { clearInterval(timer); timer = null; };
+    const orbit = $('#heroOrbit'), sats = $$('.sat', orbit), ring = $('.orbit-ring', orbit);
+    const burst = () => {
+      const end = $('.nc-end', hn); if (!end.textContent || reduced) return;
+      const vr = orbit.getBoundingClientRect(), er = end.getBoundingClientRect();
+      const x0 = er.left - vr.left + er.width / 2, y0 = er.top - vr.top + er.height / 2;
+      for (let k = 0; k < 7; k++) {
+        const sp = document.createElement('span'); sp.className = 'spark';
+        sp.textContent = k % 2 ? '-en' : '•'; orbit.appendChild(sp);
+        const a = (Math.PI * 2 * k) / 7 + Math.random() * .5, d = 50 + Math.random() * 40;
+        sp.animate([
+          { transform: `translate(${x0}px,${y0}px) scale(.4)`, opacity: 1 },
+          { transform: `translate(${x0 + Math.cos(a) * d}px,${y0 + Math.sin(a) * d}px) scale(1)`, opacity: 0 }
+        ], { duration: 800 + Math.random() * 300, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => sp.remove();
+      }
+    };
+    let ang = Math.PI / 2, last = 0, raf = null, active = -1;
+    const N = sats.length, step = (Math.PI * 2) / N, period = N * 2600;
+    const frame = t => {
+      if (last) ang += ((t - last) / period) * Math.PI * 2;
+      last = t;
+      const w = orbit.clientWidth, h = orbit.clientHeight;
+      const cTop = hn.offsetTop, cH = hn.offsetHeight;
+      const rx = w > 500 ? Math.min(w * 0.36, 215) : w * 0.49, ry = cH / 2 + (w > 500 ? 14 : 22);
+      const cx = hn.offsetLeft + hn.offsetWidth / 2, cy = cTop + cH / 2;
+      ring.style.setProperty('--ow', rx * 2 + 'px'); ring.style.setProperty('--oh', ry * 2 + 'px');
+      ring.style.setProperty('--oy', (cy / h) * 100 + '%');
+      let best = 0, bestD = 9;
+      sats.forEach((s, i) => {
+        const th = ang - i * step;
+        const x = cx + Math.cos(th) * rx, y = cy + Math.sin(th) * ry;
+        const depth = Math.sin(th); // 1 = front (bottom), -1 = back
+        const sc = 0.72 + (depth + 1) * 0.2;
+        s.style.transform = `translate(${x}px,${y}px) scale(${sc})`;
+        s.style.zIndex = depth > 0 ? 6 : 1;
+        s.style.opacity = 0.55 + (depth + 1) * 0.225;
+        let d = Math.abs(((th - Math.PI / 2) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      if (best !== active) {
+        active = best; sats.forEach((s, i) => s.classList.toggle('on', i === best));
+        show(best); setTimeout(burst, 520);
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const start = () => { if (!raf && !reduced) { last = 0; raf = requestAnimationFrame(frame); } };
+    const stop = () => { cancelAnimationFrame(raf); raf = null; };
+    if (reduced) { sats.forEach((s, i) => { s.style.display = 'none'; }); }
     whenVisible(hn, start, stop);
   }
 
@@ -163,10 +207,34 @@
   if (mc) {
     let word = 'Junge', cas = 'akk', running = false;
     const nodes = $$('.node', mc), flow = $('#mcFlow'), res = $('#mcResult'), run = $('#mcRun');
-    const pick = (group, attr, cb) => $$('button', group).forEach(b => b.addEventListener('click', () => {
+    let demo = !reduced, demoTimer = null, mcVisible = false, demoIdx = 0;
+    const demoBadge = $('#mcDemo');
+    const stopDemo = () => {
+      if (!demo) return;
+      demo = false; clearTimeout(demoTimer);
+      demoBadge.classList.add('off'); $('span', demoBadge).textContent = 'твой ход: выбирай слово и падеж';
+    };
+    const pick = (group, attr, cb) => $$('button', group).forEach(b => b.addEventListener('click', e => {
+      if (e.isTrusted) stopDemo();
       $$('button', group).forEach(x => x.classList.toggle('on', x === b)); cb(b.dataset[attr]);
-      if (!running) machine();
+      b.classList.remove('demo-pick'); void b.offsetWidth; if (!e.isTrusted) b.classList.add('demo-pick');
+      if (!running && e.isTrusted) machine();
     }));
+    const demoSeq = [['Herr', 'dat'], ['Löwe', 'gen'], ['Polizist', 'akk'], ['Nachbar', 'gen'], ['Mensch', 'dat'], ['Kunde', 'nom'], ['Bär', 'akk'], ['Junge', 'dat']];
+    const scheduleDemo = () => {
+      clearTimeout(demoTimer);
+      if (!demo || !mcVisible) return;
+      demoTimer = setTimeout(async () => {
+        if (!demo || running || !mcVisible) return scheduleDemo();
+        const [w, c] = demoSeq[demoIdx++ % demoSeq.length];
+        $(`#mcWords button[data-w="${w}"]`).click();
+        await sleep(350);
+        $(`#mcCases button[data-c="${c}"]`).click();
+        await sleep(350);
+        if (demo) await machine();
+        scheduleDemo();
+      }, 3200);
+    };
     pick($('#mcWords'), 'w', v => (word = v));
     pick($('#mcCases'), 'c', v => (cas = v));
 
@@ -212,9 +280,13 @@
       nodes.forEach((n, k) => { if (k > hitIdx) n.classList.add('passed'); });
       running = false; run.disabled = false;
     }
-    run.addEventListener('click', () => { if (!running) machine(); });
+    run.addEventListener('click', e => { if (e.isTrusted) stopDemo(); if (!running) machine(); });
     let ran = false;
-    whenVisible(mc, () => { if (!ran) { ran = true; setTimeout(machine, 500); } });
+    whenVisible(mc, async () => {
+      mcVisible = true;
+      if (!ran) { ran = true; await sleep(500); await machine(); }
+      scheduleDemo();
+    }, () => { mcVisible = false; clearTimeout(demoTimer); });
   }
 
   /* ---------- stage players ---------- */
@@ -370,6 +442,419 @@
       $('#qzAgain').addEventListener('click', () => { qi = 0; qs = 0; $('#qzScore').textContent = 0; renderQ(); });
     };
     renderQ();
+  }
+
+  /* ---------- loop helper: pausable, visibility-aware ---------- */
+  function makeLoop(el, opts = {}) {
+    const st = { visible: false, paused: false, speed: 1, alive: true };
+    const waiters = new Set();
+    const ready = () => st.visible && !st.paused;
+    const wake = () => { if (ready()) { waiters.forEach(w => w()); waiters.clear(); } };
+    st.gate = () => ready() ? Promise.resolve() : new Promise(r => waiters.add(r));
+    st.wait = ms => new Promise(res => {
+      let left = ms / st.speed, lastT = performance.now();
+      const tick = () => {
+        const now = performance.now();
+        if (ready()) left -= (now - lastT);
+        lastT = now;
+        left <= 0 ? res() : setTimeout(tick, Math.min(Math.max(left, 4), 60));
+      };
+      setTimeout(tick, Math.min(left, 60));
+    });
+    st.anim = (node, frames, o) => {
+      const a = node.animate(frames, Object.assign({ fill: 'forwards' }, o, { duration: (o.duration || 400) / st.speed }));
+      if (!ready()) a.pause();
+      (st.anims || (st.anims = new Set())).add(a);
+      a.finished.catch(() => {}).then(() => st.anims.delete(a));
+      return a.finished.catch(() => {});
+    };
+    const syncAnims = () => st.anims && st.anims.forEach(a => (ready() ? a.play() : a.pause()));
+    st.setPaused = p => { st.paused = p; syncAnims(); el.classList.toggle('is-paused', p); wake(); };
+    new IntersectionObserver(([e]) => { st.visible = e.isIntersecting; syncAnims(); el.classList.toggle('is-off', !e.isIntersecting); wake(); }, { threshold: opts.threshold || 0.2 }).observe(el);
+    return st;
+  }
+
+  /* ---------- chain sentences ---------- */
+  const chains = [
+    [['В', 'немецком', 'есть', { w: 'существительные.', t: 1 }], [{ w: 'У существительных', h: 1 }, 'есть', { w: 'падежи.', t: 1 }], [{ w: 'В падежах', h: 1 }, 'существительные', { w: 'меняются.', t: 1 }], [{ w: 'Меняются', h: 1 }, 'не', 'все.']],
+    [['Слабые', 'держатся', 'один', { w: 'падеж.', t: 1 }], [{ w: 'Этот падеж', h: 1 }, '—', { w: 'Nominativ.', t: 1 }], [{ w: 'В Nominativ', h: 1 }, 'они', { w: 'в форме.', t: 1 }], [{ w: 'В форме', h: 1 }, 'недолго.']],
+    [['Дальше', 'везде', { w: '-en.', t: 1, red: 1 }], [{ w: '-en', h: 1, red: 1 }, 'прилипает', 'к', { w: 'студенту.', t: 1 }], [{ w: 'Студент', h: 1 }, 'не', { w: 'сопротивляется.', t: 1 }], [{ w: 'Сопротивляется', h: 1 }, 'только', 'Herr.', 'Ему', 'хватает', '-n.']]
+  ];
+  const chainBox = $('#chainBox');
+  if (chainBox && !reduced) {
+    const L = makeLoop(chainBox);
+    const linesEl = $('#chainLines'), svg = $('#chainSvg'), body = $('.chain-body', chainBox), cdots = $$('#chainDots i');
+    const NS = 'http://www.w3.org/2000/svg';
+    (async () => {
+      let ci = 0;
+      for (;;) {
+        await L.gate();
+        const chain = chains[ci % chains.length];
+        cdots.forEach((d, k) => d.classList.toggle('on', k === ci % chains.length));
+        body.classList.remove('fade');
+        $$('path', svg).forEach(x => x.remove());
+        linesEl.innerHTML = '';
+        const rows = chain.map(line => {
+          const row = document.createElement('div'); row.className = 'cl';
+          const toks = line.map(tk => {
+            const o = typeof tk === 'string' ? { w: tk } : tk;
+            const sp = document.createElement('span');
+            sp.className = 'cw' + (o.t || o.h ? ' link' : '') + (o.t ? ' tail' : '') + (o.h ? ' head' : '') + (o.red ? ' red' : '');
+            sp.textContent = o.w; row.appendChild(sp); return sp;
+          });
+          linesEl.appendChild(row); return toks;
+        });
+        for (let r = 0; r < rows.length; r++) {
+          for (const sp of rows[r]) { await L.wait(110); sp.classList.add('in'); }
+          await L.wait(260);
+          const tail = $('.tail', rows[r][0].parentNode);
+          if (tail && rows[r + 1]) {
+            tail.classList.add('glow');
+            const head = rows[r + 1].find(x => x.classList.contains('head'));
+            const br = body.getBoundingClientRect(), a = tail.getBoundingClientRect(), b = head.getBoundingClientRect();
+            const x1 = a.left - br.left + a.width / 2, y1 = a.bottom - br.top + 2;
+            const x2 = b.left - br.left + Math.min(b.width / 2, 40), y2 = b.top - br.top - 3;
+            const path = document.createElementNS(NS, 'path');
+            path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + 26} ${x2},${y2 - 26} ${x2},${y2}`);
+            path.setAttribute('marker-end', 'url(#chArrow)');
+            svg.appendChild(path);
+            const len = path.getTotalLength();
+            path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+            await L.anim(path, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 650, easing: 'ease-in-out' });
+            head.classList.add('in', 'glow');
+            await L.wait(380);
+            tail.classList.remove('glow');
+            setTimeout(() => head.classList.remove('glow'), 900);
+          }
+        }
+        await L.wait(2600);
+        body.classList.add('fade');
+        await L.wait(600);
+        ci++;
+      }
+    })();
+  }
+
+  /* ---------- conveyor ---------- */
+  const cvWords = [
+    { a: 'der', s: 'Junge', e: 'n', t: 'weak', why: 'на -e + живой' },
+    { a: 'der', s: 'Tisch', e: 'es', t: 'strong', why: 'примет нет, обычный' },
+    { a: 'der', s: 'Name', e: 'ns', t: 'mixed', why: 'список «-ns»' },
+    { a: 'der', s: 'Polizist', e: 'en', t: 'weak', why: 'суффикс -ist' },
+    { a: 'der', s: 'Lehrer', e: 's', t: 'strong', why: 'на -er, ловушка' },
+    { a: 'der', s: 'Bär', e: 'en', t: 'weak', why: 'животное' },
+    { a: 'das', s: 'Herz', e: 'ens', t: 'mixed', why: 'особый случай' },
+    { a: 'der', s: 'Planet', e: 'en', t: 'weak', why: 'иностранное -et' },
+    { a: 'der', s: 'Autor', e: 's', t: 'strong', why: '-or: в ед. ч. сильный' },
+    { a: 'der', s: 'Herr', e: 'n', t: 'weak', why: 'список: только -n' },
+    { a: 'der', s: 'Gedanke', e: 'ns', t: 'mixed', why: 'список «-ns»' },
+    { a: 'der', s: 'Kunde', e: 'n', t: 'weak', why: 'на -e + живой' },
+    { a: 'der', s: 'Tag', e: 'es', t: 'strong', why: 'примет нет, обычный' }
+  ];
+  const cvBox = $('#conveyorBox');
+  if (cvBox) {
+    const L = makeLoop(cvBox);
+    const tile = $('#cvTile'), stage = $('#cvStage'), belt = $('.cv-belt', cvBox), press = $('.cv-stamp', cvBox);
+    const l1 = $('#cvL1'), l2 = $('#cvL2'), l3 = $('#cvL3');
+    const typeRu2 = { weak: 'СЛАБОЕ', strong: 'СИЛЬНОЕ', mixed: 'СМЕШАННОЕ' };
+    const playB = $('#cvPlay'), speedB = $('#cvSpeed');
+    playB.addEventListener('click', () => {
+      L.setPaused(!L.paused);
+      $('use', playB).setAttribute('href', L.paused ? '#i-play' : '#i-pause');
+      belt.style.animationPlayState = L.paused ? 'paused' : '';
+    });
+    speedB.addEventListener('click', () => { L.speed = L.speed === 1 ? 2 : 1; speedB.textContent = '×' + L.speed; });
+    const typeLine = async (el, html) => {
+      const tmp = document.createElement('div'); tmp.innerHTML = html; const text = tmp.textContent;
+      for (let k = 1; k <= text.length; k++) { el.textContent = text.slice(0, k) + '_'; await L.wait(22); }
+      el.innerHTML = html;
+    };
+    const rel = (el) => { const b = cvBox.getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - b.left, y: r.top - b.top, w: r.width, h: r.height }; };
+    (async () => {
+      let i = 0;
+      for (;;) {
+        await L.gate();
+        const w = cvWords[i++ % cvWords.length];
+        const art = $('.cv-art', tile), stem = $('.cv-stem', tile), end = $('.cv-end', tile);
+        art.textContent = w.a; stem.textContent = w.s; end.textContent = ''; end.className = 'cv-end ' + w.t;
+        l1.textContent = ''; l2.textContent = ''; l3.textContent = '';
+        const st = rel(stage), boxW = cvBox.clientWidth, tw = tile.offsetWidth, th = tile.offsetHeight;
+        const beltY = st.y + stage.clientHeight - 26 - th + 2;
+        const cx = boxW / 2 - tw / 2;
+        belt.classList.add('moving');
+        await L.anim(tile, [{ transform: `translate(${-tw - 20}px,${beltY}px)`, opacity: 1 }, { transform: `translate(${cx}px,${beltY}px)`, opacity: 1 }], { duration: 1000, easing: 'cubic-bezier(.2,.7,.3,1)' });
+        belt.classList.remove('moving');
+        await typeLine(l1, `&gt; ${w.a} ${w.s}`);
+        cvBox.classList.add('scanning');
+        await typeLine(l2, `примета: ${w.why}`);
+        await L.wait(500);
+        cvBox.classList.remove('scanning');
+        await typeLine(l3, `тип: <span class="t-${w.t}">${typeRu2[w.t]}</span>`);
+        // stamp
+        const pr = rel(press), dy = beltY - (pr.y + pr.h) + 6;
+        await L.anim(press, [{ transform: 'translateY(0)' }, { transform: `translateY(${dy}px)` }], { duration: 260, easing: 'cubic-bezier(.6,0,1,.6)' });
+        art.textContent = 'des'; end.textContent = w.e;
+        const cx2 = cvBox.clientWidth / 2 - tile.offsetWidth / 2;
+        L.anim(tile, [{ transform: `translate(${cx2}px,${beltY}px) scale(1.15,.82)` }, { transform: `translate(${cx2}px,${beltY}px) scale(1)` }], { duration: 420, easing: 'cubic-bezier(.3,1.8,.5,1)' });
+        await L.anim(press, [{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration: 380, easing: 'ease-out' });
+        l3.innerHTML = `тип: <span class="t-${w.t}">${typeRu2[w.t]}</span> → des ${w.s}${w.e}`;
+        await L.wait(700);
+        // exit + drop into bin
+        const bin = $(`.bin[data-bin="${w.t}"]`, cvBox), mouth = rel($('.bin-mouth', bin));
+        const exitX = Math.min(cvBox.clientWidth - tile.offsetWidth - 6, cx2 + 90);
+        belt.classList.add('moving');
+        await L.anim(tile, [{ transform: `translate(${cx2}px,${beltY}px)` }, { transform: `translate(${exitX}px,${beltY}px)` }], { duration: 420, easing: 'ease-in' });
+        belt.classList.remove('moving');
+        const tx = mouth.x + mouth.w / 2 - tile.offsetWidth / 2, ty = mouth.y - th / 2;
+        const mx = (exitX + tx) / 2, my = Math.min(beltY, ty) - 50;
+        await L.anim(tile, [
+          { transform: `translate(${exitX}px,${beltY}px) rotate(0) scale(1)`, opacity: 1 },
+          { transform: `translate(${mx}px,${my}px) rotate(${tx < exitX ? -140 : 140}deg) scale(.8)`, opacity: 1, offset: .5 },
+          { transform: `translate(${tx}px,${ty + 20}px) rotate(${tx < exitX ? -300 : 300}deg) scale(.3)`, opacity: 0 }
+        ], { duration: 900, easing: 'cubic-bezier(.4,0,.6,1)' });
+        const n = $('.bin-n', bin); n.textContent = +n.textContent + 1;
+        n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
+        bin.classList.remove('hit'); void bin.offsetWidth; bin.classList.add('hit');
+        const stack = $('.bin-stack', bin), chip = document.createElement('span');
+        chip.textContent = `des ${w.s}${w.e}`; stack.prepend(chip);
+        while (stack.children.length > 3) stack.lastChild.remove();
+        await L.wait(350);
+      }
+    })();
+  }
+
+  /* ---------- pains spotlight ---------- */
+  const painGrid = $('.pain-grid');
+  if (painGrid && !reduced) {
+    const cards = $$('.g-card', painGrid); let pi = 0;
+    const L = makeLoop(painGrid);
+    (async () => { for (;;) { await L.gate(); cards.forEach((c, k) => c.classList.toggle('spot', k === pi % cards.length)); pi++; await L.wait(1700); } })();
+  }
+
+  /* ---------- habit tracker ---------- */
+  const habitBox = $('#habitBox');
+  if (habitBox) {
+    const rowsN = ['Чтение', 'Слушание', 'Разговор', 'Письмо', 'Слова'], days = 14;
+    const grid = $('#hbGrid'), cells = [];
+    rowsN.forEach((r, ri) => {
+      const lab = document.createElement('span'); lab.className = 'rl'; lab.textContent = r; grid.appendChild(lab);
+      cells[ri] = [];
+      for (let d = 0; d < days; d++) { const c = document.createElement('i'); c.className = 'hb-c'; c.style.setProperty('--k', ri * days + d); grid.appendChild(c); cells[ri].push(c); }
+    });
+    const line = $('.hb-line', habitBox), area = $('.hb-area', habitBox), dot = $('.hb-dot', habitBox);
+    const L = makeLoop(habitBox);
+    const msgs = ['поехали', 'втягиваешься', 'уже привычка', 'не ломай цепочку', 'половина пути', 'так держать'];
+    (async () => {
+      for (;;) {
+        await L.gate();
+        let streak = 0; const pts = [];
+        cells.flat().forEach(c => (c.className = 'hb-c'));
+        $('#hbStreak').textContent = 0;
+        for (let d = 0; d < days; d++) {
+          $('#hbDay').textContent = `день ${d + 1} из ${days}`;
+          let total = 0, filled = 0;
+          const skipDay = d === 6 + Math.floor(Math.random() * 3) && Math.random() < .5;
+          for (let r = 0; r < rowsN.length; r++) {
+            const c = cells[r][d]; c.classList.add('today');
+            await L.wait(70);
+            const p = skipDay ? .15 : .55 + d * .03;
+            if (Math.random() < p) {
+              const lvl = 1 + Math.floor(Math.random() * 3); c.classList.add('l' + lvl, 'pop'); total += lvl * 8; filled++;
+            }
+            c.classList.remove('today');
+          }
+          streak = filled >= 2 ? streak + 1 : 0;
+          const sEl = $('#hbStreak'); sEl.textContent = streak;
+          const sw = sEl.parentElement; sw.classList.remove('bump'); void sw.offsetWidth; sw.classList.add('bump');
+          $('#hbMin').textContent = total;
+          pts.push(total);
+          const W = 280, H = 70, max = 120;
+          const P = pts.map((v, k) => [k * (W / (days - 1)), H - 4 - (Math.min(v, max) / max) * (H - 10)]);
+          line.setAttribute('points', P.map(q => q.join(',')).join(' '));
+          area.setAttribute('d', `M0,${H} L${P.map(q => q.join(',')).join(' L')} L${P[P.length - 1][0]},${H} Z`);
+          dot.setAttribute('cx', P[P.length - 1][0]); dot.setAttribute('cy', P[P.length - 1][1]);
+          $('#hbMsg').textContent = filled < 2 ? 'пропуск. бывает. завтра снова' : msgs[Math.min(msgs.length - 1, Math.floor(d / 2.4))];
+          await L.wait(420);
+        }
+        $('#hbMsg').textContent = 'две недели. почти без пропусков';
+        await L.wait(2600);
+        grid.classList.add('wipe');
+        cells.flat().forEach(c => (c.className = 'hb-c'));
+        line.setAttribute('points', ''); area.setAttribute('d', ''); dot.setAttribute('cx', -10);
+        await L.wait(900);
+        grid.classList.remove('wipe');
+      }
+    })();
+  }
+
+  /* ---------- flashcards ---------- */
+  const flashBox = $('#flashBox');
+  if (flashBox) {
+    const deck = [
+      ['der', 'Nachbar', '[ˈnaxbaːɐ̯]', 'сосед', 'des Nachbar<em>n</em>', 'ok'],
+      ['der', 'Kollege', '[kɔˈleːɡə]', 'коллега', 'des Kollege<em>n</em>', 'again'],
+      ['der', 'Mensch', '[mɛnʃ]', 'человек', 'des Mensch<em>en</em>', 'ok'],
+      ['der', 'Name', '[ˈnaːmə]', 'имя', 'des Name<em>ns</em>', 'again'],
+      ['der', 'Held', '[hɛlt]', 'герой', 'des Held<em>en</em>', 'ok'],
+      ['der', 'Architekt', '[aʁçiˈtɛkt]', 'архитектор', 'des Architekt<em>en</em>', 'ok'],
+      ['der', 'Löwe', '[ˈløːvə]', 'лев', 'des Löwe<em>n</em>', 'again'],
+      ['der', 'Kunde', '[ˈkʊndə]', 'клиент', 'des Kunde<em>n</em>', 'ok']
+    ];
+    const stageEl = $('#fcStage'); const L = makeLoop(flashBox);
+    const queue = deck.map((c, k) => ({ c, again: 0, k }));
+    let userChoice = null, userUntil = 0;
+    const mk = item => {
+      const [a, w, ipa, tr, gen] = item.c;
+      const el = document.createElement('div'); el.className = 'fcard';
+      el.innerHTML = `<div class="fs front">${item.again ? '<span class="flag">повтор</span>' : ''}<span class="fa">${a}</span><span class="fw">${w}</span><span class="fi">${ipa}</span></div>
+        <div class="fs back"><span class="ft">${tr}</span><span class="fg">${gen}</span><span class="fi" style="color:rgba(255,255,255,.75)">слабое · -(e)n</span></div>`;
+      return el;
+    };
+    const bump = el => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
+    $$('.fc-b', flashBox).forEach(b => b.addEventListener('click', () => { userChoice = b.dataset.a; userUntil = performance.now() + 8000; }));
+    (async () => {
+      for (;;) {
+        await L.gate();
+        const item = queue.shift();
+        const cur = mk(item); const nxt = queue[0] ? mk(queue[0]) : null; const nxt2 = queue[1] ? mk(queue[1]) : null;
+        $$('.fcard', stageEl).forEach(x => x.remove());
+        if (nxt2) { nxt2.classList.add('under2'); stageEl.appendChild(nxt2); }
+        if (nxt) { nxt.classList.add('under'); stageEl.appendChild(nxt); }
+        cur.classList.add('under'); stageEl.appendChild(cur);
+        requestAnimationFrame(() => requestAnimationFrame(() => cur.classList.remove('under')));
+        cur.addEventListener('click', () => cur.classList.toggle('flip'));
+        await L.wait(1300);
+        cur.classList.add('flip');
+        // wait for user or auto
+        const t0 = performance.now(); userChoice = null;
+        while (!userChoice && performance.now() - t0 < (performance.now() < userUntil ? 6000 : 1500)) await L.wait(100);
+        const choice = userChoice || item.c[5];
+        const btn = $(`.fc-b[data-a="${choice}"]`, flashBox); btn.classList.remove('fc-hit'); void btn.offsetWidth; btn.classList.add('fc-hit');
+        const dir = choice === 'ok' ? 1 : -1;
+        await L.anim(cur, [
+          { transform: 'rotateY(180deg) translateX(0) rotate(0)', opacity: 1 },
+          { transform: `rotateY(180deg) translateX(${-dir * 170}px) translateY(40px) rotate(${-dir * 18}deg) scale(.45)`, opacity: 0 }
+        ], { duration: 600, easing: 'cubic-bezier(.5,0,.7,.4)' });
+        const cnt = $(choice === 'ok' ? '#fcOk' : '#fcAgain'); cnt.textContent = +cnt.textContent + 1; bump(cnt);
+        if (choice === 'again') queue.splice(Math.min(2, queue.length), 0, { c: [...item.c.slice(0, 5), 'ok'], again: 1, k: item.k });
+        else queue.push({ c: item.c, again: 0, k: item.k });
+        if (queue.every(q => !q.again) && +$('#fcOk').textContent > 40) { $('#fcOk').textContent = 0; $('#fcAgain').textContent = 0; }
+        await L.wait(250);
+      }
+    })();
+  }
+
+  /* ---------- path traveling highlight ---------- */
+  const pathGrid = $('[data-path]');
+  if (pathGrid && !reduced) {
+    const nodes = $$('.p-node', pathGrid); const L = makeLoop(pathGrid);
+    (async () => {
+      await L.wait(1400);
+      for (let k = 0; ; k++) {
+        await L.gate();
+        const idx = k % (nodes.length + 1);
+        nodes.forEach((n, j) => { n.classList.toggle('active', j === idx); n.classList.toggle('done', j < idx); });
+        await L.wait(idx === nodes.length ? 1200 : 1050);
+      }
+    })();
+  }
+
+  /* ---------- coverflow ---------- */
+  const cf = $('#coverflow');
+  if (cf) {
+    const items = $$('.cf-item', cf), n = items.length, cap = $('#cfCap'), dotsEl = $('#cfDots'), bar = $('#cfBar');
+    let cur = 0, timer = null, visible = false, hover = false;
+    const DUR = 3200;
+    const dots = items.map((_, k) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Экран ' + (k + 1)); b.addEventListener('click', () => go(k, true)); dotsEl.appendChild(b); return b; });
+    const layout = () => {
+      const wide = cf.clientWidth > 700, gap = wide ? 250 : 120, gap2 = wide ? 110 : 60;
+      items.forEach((it, k) => {
+        let d = k - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
+        const ad = Math.abs(d), sg = Math.sign(d);
+        const x = ad === 0 ? 0 : sg * (gap + (ad - 1) * gap2);
+        const rot = ad === 0 ? 0 : -sg * 42;
+        const z = ad === 0 ? 60 : -140 - (ad - 1) * 90;
+        it.style.transform = `translateX(${x}px) translateZ(${z}px) rotateY(${rot}deg)`;
+        it.style.zIndex = 100 - ad;
+        it.style.opacity = ad > 3 ? 0 : 1 - ad * 0.12;
+        it.style.filter = ad ? `brightness(${1 - ad * 0.08})` : 'none';
+        it.style.pointerEvents = ad > 3 ? 'none' : 'auto';
+        it.classList.toggle('cur', ad === 0);
+      });
+      dots.forEach((d, k) => d.classList.toggle('on', k === cur));
+      cap.textContent = $('figcaption', items[cur]).textContent;
+    };
+    const restartBar = () => { bar.classList.remove('run'); void bar.offsetWidth; if (visible && !hover && !reduced) bar.classList.add('run'); };
+    const schedule = () => { clearTimeout(timer); restartBar(); if (visible && !hover && !reduced) timer = setTimeout(() => go(cur + 1), DUR); };
+    const go = (k, user) => { cur = (k + n) % n; layout(); schedule(); };
+    cf.style.setProperty('--cfdur', DUR + 'ms');
+    items.forEach((it, k) => it.addEventListener('click', () => { if (k !== cur) go(k, true); }));
+    $('#cfPrev').addEventListener('click', () => go(cur - 1, true));
+    $('#cfNext').addEventListener('click', () => go(cur + 1, true));
+    const stageEl = $('#cfStage');
+    stageEl.addEventListener('mouseenter', () => { hover = true; schedule(); });
+    stageEl.addEventListener('mouseleave', () => { hover = false; schedule(); });
+    let sx = null;
+    stageEl.addEventListener('pointerdown', e => { sx = e.clientX; });
+    stageEl.addEventListener('pointerup', e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1), true); });
+    window.addEventListener('resize', layout);
+    layout();
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; schedule(); }, { threshold: 0.3 }).observe(cf);
+  }
+
+  /* ---------- gallery auto-scroll ---------- */
+  const gal = $('.gal-track');
+  if (gal && !reduced) {
+    let gVisible = false, userAt = 0;
+    const markUser = () => (userAt = performance.now());
+    ['pointerdown', 'wheel', 'touchstart'].forEach(ev => gal.addEventListener(ev, markUser, { passive: true }));
+    new IntersectionObserver(([e]) => (gVisible = e.isIntersecting), { threshold: 0.3 }).observe(gal);
+    setInterval(() => {
+      if (!gVisible || performance.now() - userAt < 7000) return;
+      const item = gal.children[0]; if (!item) return;
+      const stepW = item.getBoundingClientRect().width + 14;
+      const atEnd = gal.scrollLeft + gal.clientWidth >= gal.scrollWidth - 8;
+      gal.scrollTo({ left: atEnd ? 0 : gal.scrollLeft + stepW, behavior: 'smooth' });
+    }, 4200);
+  }
+
+  /* ---------- forever phone screens ---------- */
+  const scr = $('#fvScreens');
+  if (scr && !reduced) {
+    const imgs = $$('img', scr).slice(0, 3); $$('img', scr)[3] && $$('img', scr)[3].remove();
+    const tap = $('.tap', scr.parentElement); const L = makeLoop(scr.parentElement);
+    imgs[0].classList.add('cur');
+    (async () => {
+      for (let k = 1; ; k++) {
+        await L.wait(3200); await L.gate();
+        tap.classList.remove('go'); void tap.offsetWidth; tap.classList.add('go');
+        await L.wait(500);
+        imgs.forEach((im, j) => { im.classList.remove('cur', 'prev'); if (j === k % 3) im.classList.add('cur'); if (j === (k + 2) % 3) im.classList.add('prev'); });
+      }
+    })();
+  }
+
+  /* ---------- reviews marquee + lightbox ---------- */
+  const mq = $('#revMarquee');
+  if (mq) {
+    $$('.mq-track', mq).forEach(tr => {
+      const kids = [...tr.children];
+      kids.forEach(k => { const c = k.cloneNode(true); c.setAttribute('aria-hidden', 'true'); tr.appendChild(c); });
+      const setDur = () => tr.style.setProperty('--mqdur', Math.round(tr.scrollWidth / 2 / 38) + 's');
+      $$('img', tr).forEach(im => im.addEventListener('load', setDur, { once: true }));
+      setDur();
+    });
+    if (reduced) mq.classList.add('paused');
+    const lb = $('#lightbox'), lbImg = $('img', lb);
+    mq.addEventListener('click', e => {
+      const fig = e.target.closest('.rv'); if (!fig) return;
+      const im = $('img', fig);
+      if (!im) { mq.classList.toggle('paused'); return; }
+      lbImg.src = im.src; lbImg.alt = im.alt; lb.hidden = false; mq.classList.add('paused');
+    });
+    const closeLb = () => { lb.hidden = true; mq.classList.remove('paused'); };
+    lb.addEventListener('click', e => { if (e.target !== lbImg) closeLb(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
   }
 
   /* ---------- lazy videos ---------- */
